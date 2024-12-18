@@ -87,7 +87,7 @@ jobs:
                 "https://api.github.com/orgs/${{ github.repository_owner }}/teams"
             fi
           done
-          
+
       - name: Create App token
         id: create_repo_token
         uses: actions/create-github-app-token@v1
@@ -96,19 +96,19 @@ jobs:
           private-key: ${{ secrets.FSDH_REPO_ADMIN_APP_KEY }}
           owner: ${{ github.repository_owner }}
 
-
       - name: Delegate Teams Permissions
         env:
           GHH_TOKEN: ${{ steps.create_repo_token.outputs.token }}
         run: |
           echo "Finding team configuration files..."
-          team_files=$(find ./.github/workflows/team-configs -name '*.json')
+          team_files=$(find ./.github/workflows/team-configs -name '*.json' -print0)
+
           if [[ -z "$team_files" ]]; then
             echo "No team configuration files found. Exiting..."
             exit 1
           fi
 
-          echo "$team_files" | tr ' ' '\n' | while read -r team_file; do
+          echo "$team_files" | tr ' ' '\n' | while IFS= read -r -d '' team_file; do
             echo "Processing team configuration from $team_file..."
             team=$(cat "$team_file")
             TEAM_NAME=$(echo "$team" | jq -r '.name')
@@ -153,8 +153,6 @@ jobs:
                 -d "{\"permission\":\"${REPO_PERMISSION}\"}"
             done
           done
-
-
 
       - name: Manage Team Members
         env:
